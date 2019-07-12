@@ -61,14 +61,14 @@ function bpf(channels, type, signal, sample_rate)
     end
   
     % Rectify
-    filtered = abs(filtered);
-    rectified = 2*filtered.*filtered;
-    [c,d] = butter(1, 0.001);
-    enveloped = filter(c, d, rectified);
-    enveloped = sqrt(2*enveloped);  
+    %filtered = abs(filtered);
+    %rectified = 2*filtered.*filtered;
+    %[c,d] = butter(1, 0.001);
+    %enveloped = filter(c, d, rectified);
+    %enveloped = sqrt(2*enveloped);  
     
     disp(i+1)
-    %subplot(6,1,i+1)
+    subplot(6,1,i+1)
     % DFT the filtered signal to freq domain
     Y = fft(filtered);
     P2 = abs(Y);
