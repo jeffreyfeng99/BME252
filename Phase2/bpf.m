@@ -2,98 +2,124 @@
 % type -- string for type of filter
 % CURRENT LIMITATION: sampling rate controls the range of plottable x values
 % anything over that limit will overlap :( 
-function bpf(channels, type, signal, sample_rate)
-  length = length(signal);
+function bpf(channels, type, signal, sample_rate, varargin)
+  
+  % Initialize constants and variables
+  num_samples = length(signal);
+  x = zeros(1, channels); % THIS IS UNUSED
+  total_width = 7900/channels;
+  
+  plot_time_domain = true;
+  if ~isempty(varargin),
+    plot_time_domain = varargin{1};
+  end
+  
+  % Create subplots for signal and filtered channels
+  figure(1)
+  subplot(channels + 1,1,1);
+  
+  % Plot the original signal
 
-  x = zeros(1, channels);
-  % or do linspace
-  % x = linspace(0, n, n)
-  
-  width = 7900/channels;
-  
-  figure
-  subplot(6,1,1);
-  Y = fft(signal);
-  disp(size(Y))
-  P2 = abs(Y); % /43250
-  P1 = P2(1:length/2+1);
-  P1(2:end-1) = 2*P1(2:end-1);
-  f = sample_rate*(0:(length/2))/length;
-  plot(f,P1) 
-  %plot(signal);
+  if plot_time_domain == true,
+    plot(signal);
+  else
+    Y = fft(signal);
+    P2 = abs(Y); % /43250 for scaling
+    P1 = P2(1:num_samples/2+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    f = sample_rate*(0:(num_samples/2))/num_samples;
+    plot(f,P1) 
+  end
   title("Raw Audio")
-  %plot(abs(fft(signal)))
   
+  % Filter over the channels
   for i=1:channels,
-    fc = (i*width) - (width/2) + 100
-    fl = fc - (width/2) % Lower cutoff
-    fh = fc + (width/2) % High cutoff
+    
+    % Define the filter properties for the specific channels
+    fc = (i*total_width) - (total_width/2) + 100
+    fl = fc - (total_width/2) % Lower cutoff
+    fh = fc + (total_width/2) % High cutoff
     passband = [fl fh]
     
-    % create passband filters
+    % Create passband filters
     if type=="bessel",
       % bessel set up
       [b,a] = besself(1, fc);
-      %[h,w] = freqz(b, a);
-    end
-       
-    if type=="butter",
+    elseif type=="butter",
       % butter set up
-      [b,a] = butter(4, passband/8001);
-      %[h,w] = freqz(b,a);
-      pause(1)
-    end
-    
-    if type=="cheby1",
+      [b,a] = butter(7, passband/8001);
+    elseif type=="cheby1",
       % cheby first order set up
       [b,a] = cheby1(1, 3, passband/8000);
-      %[h,w] = freqz(b,a);
-    end
-    
-    if type=="fir1  ",   %Check string size first, and then character equality
+    elseif type=="fir1  ",   %Check string size first, and then character equality
       b = fir1(10, passband/8000);
+    elseif type=="kaiser",
+        win = kaiser(51, 8);
+
+        % Calculate the coefficients using the FIR1 function.
+        b  = fir1(50, passband/(sample_rate/2+1), 'bandpass', win, 'scale');
+        Hk = dfilt.dffir(b);
     end
     
-    if type!="fir1  ",
-    filtered = filtfilt(b, a, signal);
+    % Apply filters
+    if ~strcmp(type,"kaiser"),
+        filtered = filter(b,a,signal);
     else
-    filtered = filtfilt(b,1,signal);
+        filtered = filter(Hk,signal);
     end
   
     % Rectify
-    %filtered = abs(filtered);
-    %rectified = 2*filtered.*filtered;
-    %[c,d] = butter(1, 0.001);
-    %enveloped = filter(c, d, rectified);
-    %enveloped = sqrt(2*enveloped);  
+    
+    Hd2 = dsp.LowpassFilter('SampleRate',sample_rate, 'FilterOrder', 10, 'PassbandFrequency', 400, 'FilterType', 'IIR', 'DesignForMinimumOrder',false);
+    rectified = abs(filtered).*abs(filtered);
+    %[e,f] = butter(1, 400/(sample_rate/2)); %digital butter filter 
+    [e,f] = butter(1,400*2*pi,'s'); %analog butter filter 
+    %[e,f] = besself(1, 400); % analog besself 
+    
+    % Manual transfer function
+      % num = [0, 2000]
+      % den = [1, 2000]
+      % Hs = tf(num,den)
+     
+    % View bode plots 
+      % LPF = tf(e,f);
+      % figure(12)
+      % freqz(e,f);
+      % figure(13)
+      % bode(Hs);
+    
+    h  = fdesign.lowpass('N,F3dB', 1, 400, 16000);
+    Hd1 = design(h, 'butter');
+    enveloped = filter(Hd1, rectified);
+    enveloped = sqrt(2*enveloped);  
+    %[enveloped,ylower] = envelope(filtered)
     
     disp(i+1)
-    subplot(6,1,i+1)
-    % DFT the filtered signal to freq domain
-    Y = fft(filtered);
-    P2 = abs(Y);
-    P1 = P2(1:length/2+1);
-    P1(2:end-1) = 2*P1(2:end-1);
-    f = sample_rate*(0:(length/2))/length;
-
-    %plot(f, P1);
-    if i==1,
-      figure
+    figure(1)
+    subplot(channels+1,1,i+1)
+    if plot_time_domain == true,
       plot(filtered);
-      hold on
-      plot(enveloped);
+    else
+      % DFT the filtered signal to freq domain
+      Y = fft(filtered);
+      P2 = abs(Y);
+      P1 = P2(1:num_samples/2+1);
+      P1(2:end-1) = 2*P1(2:end-1);
+      f = sample_rate*(0:(num_samples/2))/num_samples;
+      plot(f, P1);
     end
     
-    %ylim([0 2000]);
-    #title(sprintf("Channel %d",i))
-    %plot(abs(fft(filtered)))
+    if i==1,
+      figure(2)
+      plot(rectified);
+      hold on
+      plot(enveloped);
+      hold off
+    end
     
+    figure(1)
+    title(sprintf("Channel %d",i))
     
   end
- 
-  disp(x)
-
 end
-
-
 

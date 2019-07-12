@@ -17,7 +17,7 @@ data = sin(2*pi*890*xx) + sin(2*pi*2400*xx) + sin(2*pi*5600*xx);
 
 %data = sin(2*pi*900*xx);
 %bpf(5, "cheby1", y.', Fs);
-bpf(5, "butter", y, Fs);
+bpf(5, "butter", y, Fs, false);
 
 ##[b,a]=besself(5,10000)
 ##figure
