@@ -73,7 +73,7 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
         rectified = filtered.*filtered;
     end
     
-    % Create lowpass filter for lowpass filter
+    % Create lowpass filter for envelope
     if strcmp(lowpass_type, "bessel"),
         [e,f] = besself(1, 400*2*pi); % analog besself 
         [e,f] = impinvar(e,f,sample_rate);
