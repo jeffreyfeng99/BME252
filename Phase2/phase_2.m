@@ -19,4 +19,4 @@ end
 t = [0:1/16000:500/16000];
 data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t);
 % Call function
-bpf(5, [100 8000], "kaiser", "default", y, Fs, false);
+bpf(5, [100 8000], "kaiser", "fir1", y, Fs, false);

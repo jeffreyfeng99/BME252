@@ -18,7 +18,6 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
   % Create subplots for signal and filtered channels
   figure(1)
   subplot(channels + 1,1,1);
-  
   % Plot the original signal
   if plot_time_domain == true,
     plot(signal);
@@ -136,6 +135,5 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     title(sprintf("Channel %d",i))
     
   end
-  disp(lowpass_type)
 end
 
