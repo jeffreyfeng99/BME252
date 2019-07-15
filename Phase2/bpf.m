@@ -13,7 +13,7 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
 
   % Initialize constants and variables
   num_samples = length(signal);
-  total_width = (frequency_range(2)-frequency_range(1))/channels;
+  channel_width = (frequency_range(2)-frequency_range(1))/channels;
   
   % Create subplots for signal and filtered channels
   figure(1)
@@ -35,9 +35,9 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
   for i=1:channels,
     
     % Define the filter properties for the specific channels
-    fc = (i*total_width) - (total_width/2) + frequency_range(1);
-    fl = fc - (total_width/2); % Lower cutoff
-    fh = fc + (total_width/2) - 1; % High cutoff
+    fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
+    fl = fc - (channel_width/2); % Lower cutoff
+    fh = fc + (channel_width/2) - 1; % High cutoff
     passband = [fl fh];
     
     % Create passband filters
@@ -125,9 +125,11 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     % Plot envelope
     if i==1 | i==channels,
       figure(i+100)
-      plot(abs(filtered));
-      hold on
-      plot(enveloped);
+%       plot(abs(filtered));
+%       hold on
+       str = '#D95319';
+        color = sscanf(str(2:end),'%2x%2x%2x',[1 3])/255;
+      plot(enveloped, 'Color', color);
       hold off
     end
     
