@@ -90,7 +90,7 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     elseif strcmp(lowpass_type, "kaiser"),
         win = kaiser(21, 8);
         % Calculate the coefficients using the FIR1 function.
-        b  = fir1(20, 400/(sample_rate), 'low', win, 'scale');
+        b  = fir1(20, 400/(sample_rate/2), 'low', win, 'scale');
         Hk = dfilt.dffir(b);
     end 
     
