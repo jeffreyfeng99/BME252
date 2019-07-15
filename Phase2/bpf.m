@@ -138,7 +138,7 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     end
     
     % Plot envelope
-    if i==1 | i==channels,
+    if i==1 || i==channels,
       figure(i+100)
       plot(abs(filtered));
       hold on
