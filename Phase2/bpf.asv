@@ -76,13 +76,11 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     elseif strcmp(lowpass_type, "butter"),
         [e,f] = butter(1, 400/(sample_rate/2)); %digital butter filter 
         
-        % Produces same result as digital butter filter
-        %h  = fdesign.lowpass('N,F3dB', 1, 400, 16000);
-        %Hd1 = design(h, 'butter');
+        [e,f] = butter(1,400*2*pi,'s'); %analog butter filter
+        [e,f] = impinvar(e,f,sample_rate);
         
-        %[e,f] = butter(1,400*2*pi,'s'); %analog butter filter
-        %[e,f] = impinvar(e,f,sample_rate);
-       
+        h  = fdesign.lowpass('N,F3dB', 1, 400, 16000);
+        Hd1 = design(h, 'butter');
     elseif strcmp(lowpass_type, "cheby1"),
         [e,f] = cheby1(1, 3, 400/(sample_rate/2));
     elseif strcmp(lowpass_type,"fir1"),   
@@ -93,16 +91,18 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
         % Calculate the coefficients using the FIR1 function.
         b  = fir1(20, 400/(sample_rate), 'low', win, 'scale');
         Hk = dfilt.dffir(b);
+    elseif strcmp(lowpass_type, "equiripple"),
+        Hd = fdesign.lowpass('Fp,Fst,Ap,Ast',500,700,1,60,Fs);
     end 
     
     % Apply lowpass filter
     if strcmp(lowpass_type,"kaiser"),
-        enveloped = filter(Hk,sqrt(2*rectified));
+        enveloped = filter(Hk,signal);
     elseif strcmp(lowpass_type,"default"),
-        [enveloped,ylower] = envelope(rectified);
+        [enveloped,ylower] = envelope(rectified)
     else
         % Lower peaks
-        enveloped = filter(e,f, sqrt(2*rectified));
+        enveloped = filtfilt(e,f, sqrt(2*rectified));
         
         % enveloped = filter(Hk, (2*rectified)); % higher peaks
         % enveloped = sqrt(enveloped); 

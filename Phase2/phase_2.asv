@@ -1,5 +1,7 @@
 % File selection
-[y, Fs] = audioread("input_dir/trumpet.wav");
+[y, Fs] = audioread("oboe-bassoon.wav");
+disp(Fs)
+disp(size(y))
 
 % Convert stereo to mono if necessary
 if size(y,2) > 1
@@ -16,7 +18,9 @@ end
 
 % Pass sound through filter
 % Sine Wave
-t = [0:1/16000:500/16000];
-data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t);
+t = [0:1/16000:125/16000];
+data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t)+sin(2*pi*7200*t);
+% Sound file
+y = y(310000:400500);
 % Call function
-bpf(5, [100 8000], "kaiser", "default", y, Fs, false);
+bpf(5, [100 8000], "butter", y, Fs, false);
