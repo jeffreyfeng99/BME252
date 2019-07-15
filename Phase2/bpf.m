@@ -1,4 +1,4 @@
-function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sample_rate, plot_time_domain)
+function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sample_rate, plot_time_domain, use_abs)
   % channels - # channels specified
   % frequency_range - two values 
   % passband_type - string for type of passband filter
@@ -7,6 +7,7 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
   % sample rate - integer indicating sample rate
   % plot_time_domain -  boolean if false, plots are in frequency domain. 
   %                     If true or empty plots are in the time domain
+  % use_abs - boolean that toggles the rectification technique
   %
   % CURRENT LIMITATION: sampling rate controls the range of plottable x values
   %                     anything over that limit will overlap
@@ -66,7 +67,11 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     end
   
     % Rectify 
-    rectified = filtered.*filtered;
+    if use_abs == true,
+        rectified = abs(filtered);
+    else
+        rectified = filtered.*filtered;
+    end
     
     % Create lowpass filter for lowpass filter
     if strcmp(lowpass_type, "bessel"),
@@ -81,7 +86,6 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
         
         %[e,f] = butter(1,400*2*pi,'s'); %analog butter filter
         %[e,f] = impinvar(e,f,sample_rate);
-       
     elseif strcmp(lowpass_type, "cheby1"),
         [e,f] = cheby1(1, 3, 400/(sample_rate/2));
     elseif strcmp(lowpass_type,"fir1"),   
@@ -95,16 +99,27 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     end 
     
     % Apply lowpass filter
-    if strcmp(lowpass_type,"kaiser"),
-        enveloped = filter(Hk,sqrt(2*rectified));
-    elseif strcmp(lowpass_type,"default"),
-        [enveloped,ylower] = envelope(rectified);
+    if use_abs == true,
+        if strcmp(lowpass_type,"kaiser"),
+            enveloped = filter(Hk,rectified);
+        elseif strcmp(lowpass_type,"default"),
+            [enveloped,ylower] = envelope(rectified);
+        else
+            enveloped = filter(e,f, rectified);
+        end
     else
-        % Lower peaks
-        enveloped = filter(e,f, sqrt(2*rectified));
-        
-        % enveloped = filter(Hk, (2*rectified)); % higher peaks
-        % enveloped = sqrt(enveloped); 
+        if strcmp(lowpass_type,"kaiser"),
+            enveloped = filter(Hk,sqrt(2*rectified));
+        elseif strcmp(lowpass_type,"default"),
+            [enveloped,ylower] = envelope(rectified);
+        else
+            % Lower peaks
+            enveloped = filter(e,f, sqrt(2*rectified));
+            
+            % Higher peaks
+            % enveloped = filter(Hk, (2*rectified)); 
+            % enveloped = sqrt(enveloped); 
+        end
     end
     
     % Plot filtered signals
@@ -125,11 +140,9 @@ function bpf(channels, frequency_range, passband_type, lowpass_type, signal, sam
     % Plot envelope
     if i==1 | i==channels,
       figure(i+100)
-%       plot(abs(filtered));
-%       hold on
-       str = '#D95319';
-        color = sscanf(str(2:end),'%2x%2x%2x',[1 3])/255;
-      plot(enveloped, 'Color', color);
+      plot(abs(filtered));
+      hold on
+      plot(enveloped);
       hold off
     end
     
