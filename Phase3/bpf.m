@@ -1,4 +1,4 @@
-function [output_env, center_freq] = bpf(channels, frequency_range, passband_type, lowpass_type, signal, sample_rate, plot_time_domain, use_abs, show_plot)
+function [output_env, center_freq] = bpf(channels, overlap, frequency_range, passband_type, lowpass_type, signal, sample_rate, plot_time_domain, use_abs, show_plot)
   % channels - # channels specified
   % frequency_range - two values 
   % passband_type - string for type of passband filter
@@ -38,12 +38,28 @@ function [output_env, center_freq] = bpf(channels, frequency_range, passband_typ
   
   % Filter over the channels
   for i=1:channels,
+      
+    if overlap,
+        overlap_width = 0.75 * (frequency_range(2)-frequency_range(1));
+
+        if i==channels, 
+            overlap_width = 0;
+        end    
+
+        channel_width = (frequency_range(2) - frequency_range(1) + overlap_width)/channels;
+    end  
     
     % Define the filter properties for the specific channels
     fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
     center_freq(i) = fc;
-    fl = fc - (channel_width/2); % Lower cutoff
-    fh = fc + (channel_width/2) - 1; % High cutoff
+%     fl = fc - (channel_width/2); % Lower cutoff
+%     fh = fc + (channel_width/2) - 1; % High cutoff
+    %fl = (-1*channel_width - sqrt(power(channel_width,2)+4*power(fc,2)))/2
+    fl = (-1*channel_width + sqrt(power(channel_width,2)+4*power(fc,2)))/2
+    fh = fl + channel_width
+    if fh >= 8000,
+        fh = 7999;
+    end
     passband = [fl fh];
     
     % Create passband filters

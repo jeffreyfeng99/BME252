@@ -1,5 +1,5 @@
 % File selection
-input_file = 'trumpet.wav';
+input_file = 'piano.wav';
 [y, Fs] = audioread(strcat('input_dir/',input_file));
 
 % Convert stereo to mono if necessary
@@ -20,11 +20,11 @@ end
 t = [0:1/16000:500/16000];
 data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t);
 % Generate Envelopes
-% bpf(channels, band, bandpass, lowpass, data, samplingrate, plot_time, use_abs, show_plots)
-[env, fc] = bpf(12, [100 8000], "butter", "fir1", y, Fs, false, false, false);
+% bpf(channels, overlap, band, bandpass, lowpass, data, samplingrate, plot_time, use_abs, show_plots)
+[envelopes, fc] = bpf(50, false, [100 8000], "butter", "kaiser", y, Fs, false, false, false);
 
 % Synthesize output
-output_signal = amp_modulate(Fs, env, fc);
+output_signal = amp_modulate(Fs, envelopes, fc);
 % Write sound to new file
 if ~exist('output_dir', 'dir')
    mkdir('output_dir');
@@ -42,4 +42,5 @@ end
 
 %Play sound
 sound(output_signal, Fs)
+%sound(y,Fs)
 
