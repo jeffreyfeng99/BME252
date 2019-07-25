@@ -20,6 +20,7 @@ end
 t = [0:1/16000:500/16000];
 data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t);
 % Generate Envelopes
+% bpf(channels, band, bandpass, lowpass, data, samplingrate, plot_time, use_abs, show_plots)
 [env, fc] = bpf(12, [100 8000], "butter", "fir1", y, Fs, false, false, false);
 
 % Synthesize output
