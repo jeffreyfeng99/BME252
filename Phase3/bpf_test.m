@@ -1,8 +1,8 @@
-function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ... 
+function [output_env, center_freq] = bpf_test(channels, overlap, frequency_range, ... 
                                          passband_type, passband_order, lowpass_type, ...
                                          lowpass_order, lowpass_cutoff, signal, ... 
                                          sample_rate, plot_time_domain, use_abs, ...
-                                         show_plot)
+                                         show_plot, geometric_rate)
   % channels - # channels specified
   % frequency_range - two values 
   % passband_type - string for type of passband filter
@@ -15,10 +15,15 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
 
   % Initialize constants and variables
   num_samples = length(signal);
-  channel_width = (frequency_range(2)-frequency_range(1))/channels;
+  if geometric_rate == 1
+    channel_width = (frequency_range(2)-frequency_range(1))/channels;
+  else
+    channel_width = (frequency_range(2)-frequency_range(1))/((power(geometric_rate, channels) - 1)/(geometric_rate - 1));
+  end
   overlap_width = overlap/2 * channel_width;
   output_env = zeros(num_samples, channels);
   center_freq = zeros(1, channels);
+  current_position = 0;
   
   % Create subplots for signal and filtered channels
   if show_plot == true
@@ -41,7 +46,11 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
   % Filter over the channels
   for i=1:channels
     % Define the filter properties for the specific channels
-    fc = (i*channel_width) - (channel_width/2) + frequency_range(1) - overlap_width
+    if i == 1
+        fc = (i*channel_width) - (channel_width/2) + frequency_range(1) - overlap_width;
+    else
+        fc = current_position + (channel_width/2) - overlap_width;
+    end
     center_freq(i) = fc;
     fl = fc - (channel_width/2) - overlap_width % Lower cutoff
     fh = fc + (channel_width/2) + overlap_width - 1 % High cutoff
@@ -53,6 +62,8 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
     end
     % fl = (-1*channel_width + sqrt(power(channel_width,2)+4*power(fc,2)))/2;
     % fh = fl + channel_width;
+    current_position = fh;
+    channel_width = channel_width * geometric_rate;
     passband = [fl fh];
     
     % Create passband filters

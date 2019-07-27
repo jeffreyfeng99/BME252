@@ -1,5 +1,5 @@
 % File selection
-input_file = 'piano.wav';
+input_file = 'bigblue.wav';
 [y, Fs] = audioread(strcat('input_dir/',input_file));
 [y, Fs] = downsample(y, Fs);
 
@@ -10,10 +10,12 @@ data = sin(2*pi*890*t) + sin(2*pi*2400*t) + sin(2*pi*5600*t);
 % bpf(channels, overlap, band, bandpass, bandpass_order,
 %     lowpass, lowpass_order, lowpass_cutoff, data, samplingrate, 
 %     plot_time, use_abs, show_plots)
-[envelopes, fc] = bpf(50, 0, [100 8000], "butter", 3, ...
+% [envelopes, fc] = bpf(24, -0.1, [100 8000], "butter", 3, ...
+%                      "bessel", 5, 400, y, Fs, ... 
+%                      false, false, false);
+[envelopes, fc] = bpf_test(24, 0, [100 8000], "butter", 3, ...
                       "bessel", 5, 400, y, Fs, ... 
-                      false, false, false);
-
+                      false, false, false, 0.95);
 % Synthesize output
 output_signal = amp_modulate(Fs, envelopes, fc);
 
@@ -23,3 +25,4 @@ write_sound(output_signal, Fs, input_file);
 %Play sound
 sound(output_signal, Fs)
 %sound(y,Fs)
+
