@@ -3,15 +3,39 @@ function [output_env, center_freq] = bpf_test(channels, overlap, frequency_range
                                          lowpass_order, lowpass_cutoff, signal, ... 
                                          sample_rate, plot_time_domain, use_abs, ...
                                          show_plot, geometric_rate)
-  % channels - # channels specified
-  % frequency_range - two values 
-  % passband_type - string for type of passband filter
-  % lowpass_type - string for type of lowpass filter
-  % signal - array containing sound signal
-  % sample rate - integer indicating sample rate
-  % plot_time_domain -  boolean if false, plots are in frequency domain. 
-  %                     If true or empty plots are in the time domain
-  % use_abs - boolean that toggles the rectification technique
+  % The purpose of this file is to test the implementation of non-linear
+  % band spacing. An alternative attempted is varying them geometrically.
+  % The channel width will be multiplied by geometric rate for each
+  % consecutive channel (if the first channel has a width of 'a', the next
+  % channel has a width of 'a * geometric_rate', and the next has a width
+  % of 'a * geometric_rate * geometric_rate' and so on. Given the range of 
+  % frequencies ([100 8000]) and the geometric rate, the starting width 'a'
+  % will be calculated to satisfy the conditions. 
+  % Parameters
+  % ----------
+  %     channels (int) - # channels specified
+  %     overlap (double) - percentage overlap between channels
+  %     frequency_range (int array) - two values determining range of frequencies
+  %     passband_type (string) - type of passband filter
+  %     passband_order (int) - order of the passband filter
+  %     lowpass_type (string) - type of lowpass filter
+  %     lowpass_order (int) - order of the lowpass filter
+  %     lowpass_cutoff (int) - cutoff frequency of the lowpass filter
+  %     signal (double array) - array containing sound signal
+  %     sample rate (int) - sampling rate
+  %     plot_time_domain (bool) - if false, plots are in frequency domain. 
+  %                               if true, plots are in the time domain
+  %     use_abs (bool) - boolean that toggles the rectification technique
+  %     show_plot (bool) - bool that toggles the graph display
+  %     geometric_rate (double) - the multiplicative factor applied to the
+  %                               channel width for each consecutive channel
+  %
+  % Returns
+  % -------
+  %     output_env (double array) - n x channels array containing the
+  %                                 rectified signals from each channel
+  %     center_freq (int array) - 1 x channels array containing the center
+  %                               frequencies of each of the channels
 
   % Initialize constants and variables
   num_samples = length(signal);
