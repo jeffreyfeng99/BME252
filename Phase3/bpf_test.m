@@ -76,13 +76,13 @@ function [output_env, center_freq] = bpf_test(channels, overlap, frequency_range
         fc = current_position + (channel_width/2) - overlap_width;
     end
     center_freq(i) = fc;
-    fl = fc - (channel_width/2) - overlap_width % Lower cutoff
-    fh = fc + (channel_width/2) + overlap_width - 1 % High cutoff
+    fl = fc - (channel_width/2) - overlap_width; % Lower cutoff
+    fh = fc + (channel_width/2) + overlap_width - 1; % High cutoff
     if i == 1 && fl < frequency_range(1)
-        fl = frequency_range(1)
+        fl = frequency_range(1);
     end
     if i == channels && fh >= frequency_range(2)
-        fh = frequency_range(2) - 1
+        fh = frequency_range(2) - 1;
     end
     % fl = (-1*channel_width + sqrt(power(channel_width,2)+4*power(fc,2)))/2;
     % fh = fl + channel_width;
