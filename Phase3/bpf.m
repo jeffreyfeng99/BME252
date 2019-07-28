@@ -2,7 +2,8 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
                                          passband_type, passband_order, lowpass_type, ...
                                          lowpass_order, lowpass_cutoff, signal, ... 
                                          sample_rate, plot_time_domain, use_abs, ...
-                                         show_plot)
+                                         show_plot, geometric_rate)
+
   % Parameters
   % ----------
   %     channels (int) - # channels specified
@@ -19,6 +20,8 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
   %                               if true, plots are in the time domain
   %     use_abs (bool) - boolean that toggles the rectification technique
   %     show_plot (bool) - bool that toggles the graph display
+  %     geometric_rate (double) - the multiplicative factor applied to the
+  %                               channel width for each consecutive channel
   %
   % Returns
   % -------
@@ -29,10 +32,15 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
 
   % Initialize constants and variables
   num_samples = length(signal);
-  channel_width = (frequency_range(2)-frequency_range(1))/channels;
+  if geometric_rate == 1
+    channel_width = (frequency_range(2)-frequency_range(1))/channels;
+  else
+    channel_width = (frequency_range(2)-frequency_range(1))/((power(geometric_rate, channels) - 1)/(geometric_rate - 1));
+  end
   overlap_width = overlap/2 * channel_width;
   output_env = zeros(num_samples, channels);
   center_freq = zeros(1, channels);
+  current_position = 0;
   
   % Create subplots for signal and filtered channels
   if show_plot == true
@@ -55,7 +63,11 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
   % Filter over the channels
   for i=1:channels
     % Define the filter properties for the specific channels
-    fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
+    if i == 1
+        fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
+    else
+        fc = current_position + (channel_width/2) - overlap_width;
+    end
     center_freq(i) = fc;
     fl = fc - (channel_width/2) - overlap_width; % Lower cutoff
     fh = fc + (channel_width/2) + overlap_width - 1; % High cutoff
@@ -65,8 +77,9 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
     if i == channels && fh >= frequency_range(2)
         fh = frequency_range(2) - 1;
     end
-    % fl = (-1*channel_width + sqrt(power(channel_width,2)+4*power(fc,2)))/2;
-    % fh = fl + channel_width;
+
+    current_position = fh;
+    channel_width = channel_width * geometric_rate;
     passband = [fl fh];
     
     % Create passband filters
@@ -107,13 +120,6 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
         [e,f] = impinvar(e,f,sample_rate);
     elseif strcmp(lowpass_type, "butter")
         [e,f] = butter(lowpass_order, lowpass_cutoff/(sample_rate/2)); %digital butter filter 
-        
-        % Produces same result as digital butter filter
-        %h  = fdesign.lowpass('N,F3dB', 1, 400, 16000);
-        %Hd1 = design(h, 'butter');
-        
-        %[e,f] = butter(1,400*2*pi,'s'); %analog butter filter
-        %[e,f] = impinvar(e,f,sample_rate);
     elseif strcmp(lowpass_type, "cheby1")
         [e,f] = cheby1(lowpass_order, 3, lowpass_cutoff/(sample_rate/2));
     elseif strcmp(lowpass_type,"fir1")
@@ -141,12 +147,7 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
         elseif strcmp(lowpass_type,"default")
             [enveloped,ylower] = envelope(rectified);
         else
-            % Lower peaks
             enveloped = filter(e,f, sqrt(2*rectified));
-            
-            % Higher peaks
-            % enveloped = filter(Hk, (2*rectified)); 
-            % enveloped = sqrt(enveloped); 
         end
     end
     
