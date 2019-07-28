@@ -71,7 +71,7 @@ function [output_env, center_freq] = bpf_test(channels, overlap, frequency_range
   for i=1:channels
     % Define the filter properties for the specific channels
     if i == 1
-        fc = (i*channel_width) - (channel_width/2) + frequency_range(1) - overlap_width;
+        fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
     else
         fc = current_position + (channel_width/2) - overlap_width;
     end

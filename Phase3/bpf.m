@@ -55,7 +55,7 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
   % Filter over the channels
   for i=1:channels
     % Define the filter properties for the specific channels
-    fc = (i*channel_width) - (channel_width/2) + frequency_range(1) - overlap_width
+    fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
     center_freq(i) = fc;
     fl = fc - (channel_width/2) - overlap_width; % Lower cutoff
     fh = fc + (channel_width/2) + overlap_width - 1; % High cutoff
