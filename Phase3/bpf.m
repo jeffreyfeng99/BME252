@@ -38,6 +38,7 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
     channel_width = (frequency_range(2)-frequency_range(1))/((power(geometric_rate, channels) - 1)/(geometric_rate - 1));
   end
   overlap_width = overlap/2 * channel_width;
+  prev_overlap_width = overlap_width;
   output_env = zeros(num_samples, channels);
   center_freq = zeros(1, channels);
   current_position = 0;
@@ -66,7 +67,7 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
     if i == 1
         fc = (i*channel_width) - (channel_width/2) + frequency_range(1);
     else
-        fc = current_position + (channel_width/2) - overlap_width;
+        fc = current_position + (channel_width/2) - prev_overlap_width;
     end
     center_freq(i) = fc;
     fl = fc - (channel_width/2) - overlap_width; % Lower cutoff
@@ -80,6 +81,8 @@ function [output_env, center_freq] = bpf(channels, overlap, frequency_range, ...
 
     current_position = fh;
     channel_width = channel_width * geometric_rate;
+    prev_overlap_width = overlap_width;
+    overlap_width = overlap_width * geometric_rate;
     passband = [fl fh];
     
     % Create passband filters
